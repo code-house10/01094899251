@@ -137,6 +137,88 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .animate-ring-pulse {
       animation: ring-pulse 2s infinite;
     }
+  
+
+    /* Two fixed call buttons */
+    .floating-call-bar {
+      position: fixed;
+      left: 50%;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 50;
+      width: min(calc(100% - 24px), 520px);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      direction: ltr;
+    }
+
+    .floating-call-btn {
+      min-width: 0;
+      min-height: 56px;
+      padding: 11px 12px;
+      border: 1px solid rgba(255,255,255,.82);
+      border-radius: 16px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      box-shadow: 0 14px 30px rgba(16,185,129,.32);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: 'Outfit', 'Cairo', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: transform .22s ease, box-shadow .22s ease, background .22s ease;
+      -webkit-tap-highlight-color: transparent;
+      animation: ring-pulse 2s infinite;
+    }
+
+    .floating-call-btn:hover,
+    .floating-call-btn:focus-visible {
+      transform: translateY(-3px);
+      background: linear-gradient(135deg, #059669, #047857);
+      box-shadow: 0 18px 36px rgba(16,185,129,.42);
+      outline: none;
+    }
+
+    .floating-call-btn i {
+      flex: 0 0 auto;
+      font-size: 17px;
+    }
+
+    .floating-call-btn span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width: 480px) {
+      .floating-call-bar {
+        width: calc(100% - 16px);
+        bottom: max(8px, env(safe-area-inset-bottom));
+        gap: 7px;
+      }
+
+      .floating-call-btn {
+        min-height: 52px;
+        padding: 10px 7px;
+        border-radius: 14px;
+        gap: 6px;
+        font-size: 13.5px;
+      }
+
+      .floating-call-btn i {
+        font-size: 14px;
+      }
+
+      footer {
+        padding-bottom: 104px !important;
+      }
+    }
+
   </style>
 </head>
 <body class="antialiased text-slate-800">
@@ -652,11 +734,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </footer>
 
-<!-- ================== FLOATING ACTION ================== -->
-<button onclick="openCallModal()" class="fixed bottom-6 left-6 z-40 bg-brand-success hover:bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-xl shadow-emerald-500/30 transition-transform hover:-translate-y-2 animate-ring-pulse group flex items-center gap-3">
-  <i class="fas fa-phone -scale-x-100 text-xl group-hover:rotate-12 transition-transform"></i>
-  <span class="font-bold text-sm">إتصل الان واعرف أسعارنا</span>
-</button>
+<!-- ================== FLOATING CALL BUTTONS ================== -->
+<div class="floating-call-bar" aria-label="أرقام الاتصال السريع">
+  <button type="button" class="floating-call-btn" onclick="openCallModal('01019542168')" aria-label="تأكيد الاتصال على 01019542168">
+    <i class="fas fa-phone -scale-x-100" aria-hidden="true"></i>
+    <span>01019542168</span>
+  </button>
+
+  <button type="button" class="floating-call-btn" onclick="openCallModal('01094899251')" aria-label="تأكيد الاتصال على 01094899251">
+    <i class="fas fa-phone -scale-x-100" aria-hidden="true"></i>
+    <span>01094899251</span>
+  </button>
+</div>
 
 <!-- ================== CALL CONFIRMATION MODAL (STYLED) ================== -->
 <div id="callModal" class="fixed inset-0 z-[60] hidden" role="dialog" aria-modal="true">
@@ -678,10 +767,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
 
       <div class="space-y-3">
-        <a href="tel:01094899251" onclick="closeCallModal()" 
-           class="flex items-center justify-center gap-3 w-full bg-brand-primary hover:bg-brand-dark text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-brand-primary/20 transition-all hover:scale-[1.02]">
+        <a id="confirmCallLink" href="tel:01094899251" onclick="closeCallModal()" 
+           class="flex items-center justify-center gap-3 w-full bg-brand-primary hover:bg-brand-dark text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-brand-primary/20 transition-all hover:scale-[1.02]"
+           aria-label="تأكيد الاتصال على 01094899251">
            <i class="fas fa-phone -scale-x-100"></i>
-           <span class="font-nums">01094899251</span>
+           <span id="confirmCallNumber" class="font-nums">01094899251</span>
         </a>
         
         <button onclick="closeCallModal()" class="w-full text-slate-400 hover:text-slate-600 text-sm py-2 font-bold">
@@ -732,8 +822,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   // --- Modal Logic ---
   const modal = document.getElementById('callModal');
   const modalContent = document.getElementById('callModalContent');
+  const confirmCallLink = document.getElementById('confirmCallLink');
+  const confirmCallNumber = document.getElementById('confirmCallNumber');
+  const defaultCallNumber = '01094899251';
 
-  function openCallModal() {
+  function openCallModal(phoneNumber = defaultCallNumber) {
+    const cleanedNumber = String(phoneNumber || '').replace(/\D/g, '');
+    const selectedNumber = /^01\d{9}$/.test(cleanedNumber) ? cleanedNumber : defaultCallNumber;
+
+    confirmCallLink.href = 'tel:' + selectedNumber;
+    confirmCallLink.setAttribute('aria-label', 'تأكيد الاتصال على ' + selectedNumber);
+    confirmCallNumber.textContent = selectedNumber;
+
     modal.classList.remove('hidden');
     setTimeout(() => {
       modalContent.classList.remove('scale-95', 'opacity-0');
@@ -749,14 +849,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }, 300);
   }
   
-  // Link intercept
+  // Keep the confirmation modal for any telephone link outside the modal.
   document.addEventListener('DOMContentLoaded', () => {
     const callLinks = document.querySelectorAll('a[href^="tel:"]');
     callLinks.forEach(link => {
       if (!link.closest('#callModal')) {
         link.addEventListener('click', (e) => {
           e.preventDefault();
-          openCallModal();
+          const linkedNumber = link.getAttribute('href').replace('tel:', '');
+          openCallModal(linkedNumber);
         });
       }
     });
